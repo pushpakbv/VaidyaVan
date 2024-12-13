@@ -3,6 +3,63 @@ import { Canvas } from '@react-three/fiber';
 import { OrbitControls, Environment, Html, useGLTF, Stars } from '@react-three/drei';
 import * as THREE from 'three';
 import { useNavigate } from 'react-router-dom';
+import { useAuthStore } from '../../stores/authStore';
+import axiosInstance from '../../api/axiosInstance';
+
+// Plant Quiz Component
+const PlantQuiz = ({ plant, onClose, onPass }) => {
+  const [answers, setAnswers] = useState({});
+  const [showResult, setShowResult] = useState(false);
+  
+  const questions = React.useMemo(() => [
+    {
+      question: `What is the main description of ${plant.name}?`,
+      options: [plant.info.description, 'A common garden plant', 'A decorative plant', 'A rare species'],
+      correct: 0
+    },
+    {
+      question: `Which of these is NOT a benefit of ${plant.name}?`,
+      options: ['Improves garden aesthetics', ...plant.info.benefits.slice(0, 3)],
+      correct: 0
+    },
+    {
+      question: `What is the primary use of ${plant.name}?`,
+      options: [plant.info.uses, 'Only for decoration', 'No medicinal value', 'Cannot be used by humans'],
+      correct: 0
+    }
+  ], [plant]);
+
+  const handleSubmit = () => {
+    let correct = 0;
+    questions.forEach((q, i) => {
+      if (answers[i] === q.correct) correct++;
+    });
+    const score = (correct / questions.length) * 100;
+    if (score >= 70) onPass();
+    setShowResult(true);
+  };
+
+  return (
+    <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white/95 p-8 rounded-2xl shadow-2xl z-50 max-w-md w-full">
+      <h2 className="text-2xl font-bold text-green-800 mb-4">Knowledge Check: {plant.name}</h2>
+      {questions.map((q, qIndex) => (
+        <div key={qIndex} className="mb-6">
+          <p className="font-semibold mb-2">{q.question}</p>
+          {q.options.map((option, oIndex) => (
+            <label key={oIndex} className="block mb-2">
+              <input type="radio" name={`q${qIndex}`} onChange={() => setAnswers(prev => ({...prev, [qIndex]: oIndex}))}/>
+              {option}
+            </label>
+          ))}
+        </div>
+      ))}
+      <div className="flex gap-3">
+        <button onClick={handleSubmit} className="flex-1 bg-green-600 text-white px-4 py-2 rounded">Submit</button>
+        <button onClick={onClose} className="flex-1 bg-gray-200 px-4 py-2 rounded">Cancel</button>
+      </div>
+    </div>
+  );
+};
 
 // Plant Component using 3D models
 const Plant = ({ position, modelPath, name, info, setSelectedPlant, scale = 1 }) => {
@@ -84,33 +141,64 @@ const PlantInfo = ({ plant, onClose }) => {
 
 const VirtualGarden = () => {
   const [selectedPlant, setSelectedPlant] = useState(null);
-  const [buyPopup, setBuyPopup] = useState({ show: false, plant: null, position: { x: 0, y: 0 } });
+  const [quizPopup, setQuizPopup] = useState({ show: false, plant: null });
+  const { user, fetchUserData } = useAuthStore();
   const navigate = useNavigate();
+
+  // Fetch user data when component mounts
+  useEffect(() => {
+    const fetchData = async () => {
+      console.log('Fetching user data...');
+      const userData = await fetchUserData();
+      console.log('User data received:', userData);
+    };
+    fetchData();
+  }, [fetchUserData]);
 
   // Function to handle buy button click
   const handleBuyClick = (plant, event) => {
     event.stopPropagation();
-    const rect = event.currentTarget.getBoundingClientRect();
-    setBuyPopup({
-      show: true,
-      plant,
-      position: {
-        x: rect.left,
-        y: rect.top + window.scrollY
+    const userCoins = user?.coins || 0;
+    console.log('Current user:', user);
+    console.log('User coins:', userCoins);
+    const plantCost = 100; // Example cost, adjust as needed
+    
+    if (userCoins >= plantCost) {
+      setQuizPopup({ show: true, plant });
+    } else {
+      alert(`Not enough coins to purchase this plant! You have ${userCoins} coins, but need ${plantCost} coins.`);
+    }
+  };
+
+  // Function to handle quiz pass
+  const handleQuizPass = async () => {
+    try {
+      // Deduct coins through API
+      const response = await axiosInstance.post('/users/deduct-coins', {
+        amount: 100 // plantCost
+      });
+
+      if (response.data.success) {
+        // Update user's coins in the store
+        const updatedUser = { ...user, coins: response.data.newBalance };
+        useAuthStore.getState().setUser(updatedUser);
+        
+        // Add to inventory
+        const inventory = JSON.parse(localStorage.getItem('inventory')) || [];
+        inventory.push(quizPopup.plant.name);
+        localStorage.setItem('inventory', JSON.stringify(inventory));
+        
+        setQuizPopup({ show: false, plant: null });
+        alert(`Congratulations! You've successfully purchased ${quizPopup.plant.name}!`);
       }
-    });
-  };
-
-  // Function to handle confirmation
-  const handleBuyConfirm = () => {
-    // Add your purchase logic here
-    alert(`Successfully purchased ${buyPopup.plant.name}!`);
-    setBuyPopup({ show: false, plant: null, position: { x: 0, y: 0 } });
-  };
-
-  // Function to handle cancellation
-  const handleBuyCancel = () => {
-    setBuyPopup({ show: false, plant: null, position: { x: 0, y: 0 } });
+    } catch (error) {
+      console.error('Error processing purchase:', error);
+      if (error.response?.data?.error) {
+        alert(error.response.data.error);
+      } else {
+        alert('Error processing purchase. Please try again.');
+      }
+    }
   };
 
   // Function to handle exit
@@ -453,36 +541,13 @@ const VirtualGarden = () => {
         </div>
       </div>
 
-      {/* Buy Confirmation Popup */}
-      {buyPopup.show && (
-        <div 
-          className="fixed z-50 bg-white rounded-lg shadow-xl p-4 border border-green-200"
-          style={{
-            left: `${buyPopup.position.x}px`,
-            top: `${buyPopup.position.y}px`,
-            transform: 'translate(20px, -100%)'
-          }}
-        >
-          <div className="text-center">
-            <p className="text-gray-800 font-medium mb-3">
-              Confirm purchase of {buyPopup.plant.name}?
-            </p>
-            <div className="flex space-x-2 justify-center">
-              <button
-                onClick={handleBuyConfirm}
-                className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors duration-200"
-              >
-                Confirm
-              </button>
-              <button
-                onClick={handleBuyCancel}
-                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors duration-200"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
+      {/* Quiz Popup */}
+      {quizPopup.show && (
+        <PlantQuiz
+          plant={quizPopup.plant}
+          onClose={() => setQuizPopup({ show: false, plant: null })}
+          onPass={handleQuizPass}
+        />
       )}
 
       {/* Plant Information */}

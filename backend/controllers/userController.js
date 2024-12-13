@@ -109,3 +109,34 @@ exports.getProfile = async (req, res) => {
     res.status(500).json({ error: 'Error fetching profile' });
   }
 };
+
+exports.deductCoins = async (req, res) => {
+  try {
+    const { amount } = req.body;
+    const userId = req.user.id;
+
+    // Find user and update coins
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Check if user has enough coins
+    if (user.coins < amount) {
+      return res.status(400).json({ error: 'Insufficient coins' });
+    }
+
+    // Deduct coins
+    user.coins -= amount;
+    await user.save();
+
+    res.json({ 
+      success: true, 
+      newBalance: user.coins,
+      message: `Successfully deducted ${amount} coins` 
+    });
+  } catch (error) {
+    console.error('Deduct coins error:', error);
+    res.status(500).json({ error: 'Error deducting coins' });
+  }
+};
