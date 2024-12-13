@@ -2,6 +2,7 @@ import React, { Suspense, useState, useEffect } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls, Environment, Html, useGLTF, Stars } from '@react-three/drei';
 import * as THREE from 'three';
+import { useNavigate } from 'react-router-dom';
 
 // Plant Component using 3D models
 const Plant = ({ position, modelPath, name, info, setSelectedPlant, scale = 1 }) => {
@@ -20,6 +21,9 @@ const Plant = ({ position, modelPath, name, info, setSelectedPlant, scale = 1 })
     return clone;
   }, [scene]);
 
+  // Calculate position for the label based on model height
+  const labelPosition = [0, scale * 3, 0];
+
   return (
     <group
       position={position}
@@ -30,9 +34,14 @@ const Plant = ({ position, modelPath, name, info, setSelectedPlant, scale = 1 })
     >
       <primitive object={clonedScene} />
       {hovered && (
-        <Html position={[0, 3, 0]}>
-          <div className="bg-white/90 backdrop-blur-sm p-3 rounded-xl shadow-lg transform -translate-x-1/2">
-            <p className="text-lg font-bold text-green-800">{name}</p>
+        <Html position={labelPosition} center>
+          <div className="transform -translate-y-full">
+            <div className="bg-green-800/90 backdrop-blur-sm text-white px-4 py-2 rounded-xl shadow-lg text-sm font-medium whitespace-nowrap">
+              {name}
+              <div className="absolute left-1/2 bottom-0 transform -translate-x-1/2 translate-y-1/2">
+                <div className="border-solid border-t-4 border-x-4 border-transparent border-t-green-800/90 w-2"></div>
+              </div>
+            </div>
           </div>
         </Html>
       )}
@@ -75,14 +84,70 @@ const PlantInfo = ({ plant, onClose }) => {
 
 const VirtualGarden = () => {
   const [selectedPlant, setSelectedPlant] = useState(null);
+  const [buyPopup, setBuyPopup] = useState({ show: false, plant: null, position: { x: 0, y: 0 } });
+  const navigate = useNavigate();
+
+  // Function to handle buy button click
+  const handleBuyClick = (plant, event) => {
+    event.stopPropagation();
+    const rect = event.currentTarget.getBoundingClientRect();
+    setBuyPopup({
+      show: true,
+      plant,
+      position: {
+        x: rect.left,
+        y: rect.top + window.scrollY
+      }
+    });
+  };
+
+  // Function to handle confirmation
+  const handleBuyConfirm = () => {
+    // Add your purchase logic here
+    alert(`Successfully purchased ${buyPopup.plant.name}!`);
+    setBuyPopup({ show: false, plant: null, position: { x: 0, y: 0 } });
+  };
+
+  // Function to handle cancellation
+  const handleBuyCancel = () => {
+    setBuyPopup({ show: false, plant: null, position: { x: 0, y: 0 } });
+  };
+
+  // Function to handle exit
+  const handleExit = () => {
+    navigate('/');
+  };
+
+  // Add custom scrollbar styles
+  useEffect(() => {
+    const style = document.createElement('style');
+    style.textContent = `
+      .custom-scrollbar::-webkit-scrollbar {
+        width: 6px;
+      }
+      .custom-scrollbar::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 3px;
+      }
+      .custom-scrollbar::-webkit-scrollbar-thumb {
+        background: #4ade80;
+        border-radius: 3px;
+      }
+      .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+        background: #22c55e;
+      }
+    `;
+    document.head.appendChild(style);
+    return () => document.head.removeChild(style);
+  }, []);
 
   // Define plants array inside the component
   const plantsData = [
     {
       name: 'Tulsi (Holy Basil)',
       modelPath: '/3d-models/tulsi.glb',
-      position: [-5, 0.1, -5],
-      scale: 2.5,
+      position: [-15, 0.1, -15],
+      scale: 5,
       info: {
         description: 'Tulsi is a sacred plant in Ayurvedic medicine, known for its powerful healing properties.',
         benefits: [
@@ -97,8 +162,8 @@ const VirtualGarden = () => {
     {
       name: 'Aloe Vera',
       modelPath: '/3d-models/aloe_vera_plant.glb',
-      position: [0, 0.62, -5],
-      scale: 1,
+      position: [0, 1, -15],
+      scale: 2,
       info: {
         description: 'Aloe Vera is a succulent plant species known for its medicinal properties.',
         benefits: [
@@ -113,8 +178,8 @@ const VirtualGarden = () => {
     {
       name: 'Neem',
       modelPath: '/3d-models/neem_plant.glb',
-      position: [5, 2, -5],
-      scale: 2,
+      position: [15, 6, -15],
+      scale: 6,
       info: {
         description: 'Neem is known as a natural medicine cabinet, used in traditional medicine for thousands of years.',
         benefits: [
@@ -129,8 +194,8 @@ const VirtualGarden = () => {
     {
       name: 'Turmeric',
       modelPath: '/3d-models/Turmeric.glb',
-      position: [-5, 2, 0],
-      scale: 2,
+      position: [-25, 8, 30],
+      scale: 8,
       info: {
         description: 'Turmeric is a powerful medicinal herb and spice with numerous health benefits.',
         benefits: [
@@ -145,8 +210,8 @@ const VirtualGarden = () => {
     {
       name: 'Ashwagandha',
       modelPath: '/3d-models/aswagandha.glb',
-      position: [5, 2, 0],
-      scale: 2,
+      position: [15, 6, 0],
+      scale: 6,
       info: {
         description: 'Ashwagandha is an ancient medicinal herb used in Ayurvedic medicine.',
         benefits: [
@@ -161,8 +226,8 @@ const VirtualGarden = () => {
     {
       name: 'Banana Plant',
       modelPath: '/3d-models/banana_plant.glb',
-      position: [-5, 0.09, 5],
-      scale: 2,
+      position: [1, 0.09, 30],
+      scale: 4,
       info: {
         description: 'Banana plants are known for their nutritious fruits and medicinal properties.',
         benefits: [
@@ -177,8 +242,8 @@ const VirtualGarden = () => {
     {
       name: 'Basil',
       modelPath: '/3d-models/stylized_basil_pot_plant.glb',
-      position: [5, 0, 5],
-      scale: 7,
+      position: [0, 0, 15],
+      scale: 20,
       info: {
         description: 'Basil is an aromatic herb with significant medicinal properties.',
         benefits: [
@@ -190,11 +255,96 @@ const VirtualGarden = () => {
         uses: 'Used in cooking, aromatherapy, and traditional medicine.'
       }
     },
-    
+    {
+      name: 'Hawthorn Tree',
+      modelPath: '/3d-models/hawthorn_tree.glb',
+      position: [15, 1, 40],
+      scale: 2,
+      info: {
+        description: 'Hawthorn is a medicinal tree known for its cardiovascular benefits.',
+        benefits: [
+          'Supports heart health',
+          'Reduces blood pressure',
+          'Antioxidant properties',
+          'Aids digestion'
+        ],
+        uses: 'Berries and flowers used in traditional medicine and heart health supplements.'
+      }
+    },
+    {
+      name: 'Red Ginger',
+      modelPath: '/3d-models/red_ginger_var4.glb',
+      position: [-7.5, 0, 7.5],
+      scale: 1,
+      info: {
+        description: 'Red Ginger is a tropical plant known for its ornamental and medicinal value.',
+        benefits: [
+          'Anti-inflammatory properties',
+          'Digestive aid',
+          'Immune system support',
+          'Natural pain relief'
+        ],
+        uses: 'Used in traditional medicine, cooking, and ornamental gardening.'
+      }
+    },
+    {
+      name: 'Willow Tree',
+      modelPath: '/3d-models/willow.glb',
+      position: [-30, 0, -7.5],
+      scale: 2.5,
+      info: {
+        description: 'Willow trees are known for their pain-relieving properties and were the original source of aspirin.',
+        benefits: [
+          'Natural pain relief',
+          'Reduces inflammation',
+          'Fever reduction',
+          'Anti-bacterial properties'
+        ],
+        uses: 'Bark used in traditional medicine and modern pharmaceuticals.'
+      }
+    },
+    {
+      name: 'Rosemary Willow',
+      modelPath: '/3d-models/realistic_hd_rosemary_willow_6399.glb',
+      position: [10, 0, 15],
+      scale: 14,
+      info: {
+        description: 'Rosemary Willow combines the medicinal properties of both rosemary and willow species.',
+        benefits: [
+          'Memory enhancement',
+          'Anti-inflammatory',
+          'Aromatherapy benefits',
+          'Natural pest deterrent'
+        ],
+        uses: 'Used in herbal medicine, aromatherapy, and landscaping.'
+      }
+    }
   ];
 
   return (
     <div className="w-full h-screen relative">
+      {/* Exit Button */}
+      <button
+        onClick={handleExit}
+        className="absolute top-4 right-4 z-50 flex items-center space-x-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg shadow-lg transition-all duration-300 transform hover:scale-105"
+      >
+        <svg
+          className="w-5 h-5"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+          />
+        </svg>
+        <span className="font-medium">Exit Garden</span>
+      </button>
+
       <Canvas shadows camera={{ position: [0, 5, 15], fov: 60 }}>
         <Suspense fallback={null}>
           <color attach="background" args={['#f0f8ff']} />
@@ -237,6 +387,104 @@ const VirtualGarden = () => {
         </Suspense>
       </Canvas>
 
+      {/* Controls Help */}
+      <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm rounded-xl px-6 py-4 shadow-lg">
+        <h3 className="text-xl font-bold text-green-800 mb-3">Virtual Herbal Garden</h3>
+        <div className="space-y-2">
+          <p className="text-green-700 font-semibold">Navigation Controls:</p>
+          <ul className="text-sm text-gray-700 space-y-1">
+            <li> Left Click + Drag: Rotate view</li>
+            <li> Right Click + Drag: Pan</li>
+            <li> Scroll: Zoom in/out</li>
+            <li> Click on plants for information</li>
+          </ul>
+        </div>
+      </div>
+
+      {/* Plant List */}
+      <div className="absolute top-56 left-4 bg-white/90 backdrop-blur-sm rounded-xl px-6 py-4 shadow-lg max-w-xs">
+        <h3 className="text-lg font-bold text-green-800 mb-3 border-b border-green-200 pb-2">Plants in Garden</h3>
+        <ul className="space-y-2 max-h-96 overflow-y-auto custom-scrollbar">
+          {plantsData.map((plant, index) => (
+            <li 
+              key={plant.name}
+              className="group cursor-pointer hover:bg-green-50 rounded-lg p-2 transition-all duration-200"
+              onClick={() => setSelectedPlant(plant)}
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <span className="w-2 h-2 rounded-full bg-green-500 group-hover:bg-green-600"></span>
+                  <span className="text-green-700 font-medium group-hover:text-green-800">
+                    {plant.name}
+                  </span>
+                </div>
+                <div className="flex items-center space-x-3">
+                  <span className="flex items-center space-x-1">
+                    <span className="text-amber-600 font-semibold">
+                      {(index + 1) * 10}
+                    </span>
+                    <svg className="w-4 h-4 text-amber-500" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM10 2a6 6 0 100 12 6 6 0 000-12z" clipRule="evenodd" />
+                    </svg>
+                  </span>
+                  <button
+                    onClick={(e) => handleBuyClick(plant, e)}
+                    className="px-2 py-1 text-sm bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors duration-200"
+                  >
+                    Buy
+                  </button>
+                </div>
+              </div>
+            </li>
+          ))}
+        </ul>
+        <div className="mt-3 pt-2 border-t border-green-200">
+          <p className="text-sm text-green-600 font-medium flex items-center justify-between">
+            <span>Total Plants: {plantsData.length}</span>
+            <span className="flex items-center space-x-1">
+              <span className="text-amber-600 font-semibold">{plantsData.length * (plantsData.length + 1) * 5}</span>
+              <svg className="w-4 h-4 text-amber-500" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM10 2a6 6 0 100 12 6 6 0 000-12z" clipRule="evenodd" />
+              </svg>
+            </span>
+          </p>
+        </div>
+      </div>
+
+      {/* Buy Confirmation Popup */}
+      {buyPopup.show && (
+        <div 
+          className="fixed z-50 bg-white rounded-lg shadow-xl p-4 border border-green-200"
+          style={{
+            left: `${buyPopup.position.x}px`,
+            top: `${buyPopup.position.y}px`,
+            transform: 'translate(20px, -100%)'
+          }}
+        >
+          <div className="text-center">
+            <p className="text-gray-800 font-medium mb-3">
+              Confirm purchase of {buyPopup.plant.name}?
+            </p>
+            <div className="flex space-x-2 justify-center">
+              <button
+                onClick={handleBuyConfirm}
+                className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors duration-200"
+              >
+                Confirm
+              </button>
+              <button
+                onClick={handleBuyCancel}
+                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors duration-200"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Plant Information */}
       {selectedPlant && (
         <PlantInfo
@@ -244,20 +492,6 @@ const VirtualGarden = () => {
           onClose={() => setSelectedPlant(null)}
         />
       )}
-
-      {/* Controls Help */}
-      <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm rounded-xl px-6 py-4 shadow-lg">
-        <h3 className="text-xl font-bold text-green-800 mb-3">Virtual Herbal Garden</h3>
-        <div className="space-y-2">
-          <p className="text-green-700 font-semibold">Navigation Controls:</p>
-          <ul className="text-sm text-gray-700 space-y-1">
-            <li>🖱 Left Click + Drag: Rotate view</li>
-            <li>🖱 Right Click + Drag: Pan</li>
-            <li>🖱 Scroll: Zoom in/out</li>
-            <li>🖱 Click on plants for information</li>
-          </ul>
-        </div>
-      </div>
     </div>
   );
 };
