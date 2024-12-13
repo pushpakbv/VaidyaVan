@@ -2,27 +2,38 @@ const jwt = require('jsonwebtoken');
 
 const authenticate = (req, res, next) => {
   try {
-    let token = req.headers.authorization;
+    // Get token from header
+    const authHeader = req.headers.authorization;
+    let token;
 
-    if (!token && req.cookies) {
+    // Check for token in different places
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      // Get token from Bearer header
+      token = authHeader.split(' ')[1];
+    } else if (req.cookies && req.cookies.token) {
+      // Get token from cookies
       token = req.cookies.token;
-    } else if (token && token.startsWith('Bearer ')) {
-      token = token.slice(7);
     }
 
+    // If no token found
     if (!token) {
-      return res.status(401).json({ error: 'Authentication required' });
+      return res.status(401).json({ error: 'No authentication token found' });
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = {
-      id: decoded.id
-    };
-    
-    next();
+    try {
+      // Verify token
+      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
+      req.user = {
+        id: decoded.id
+      };
+      next();
+    } catch (jwtError) {
+      console.log('Token verification failed:', token);
+      return res.status(401).json({ error: 'Invalid authentication token' });
+    }
   } catch (error) {
     console.error('Auth middleware error:', error);
-    return res.status(403).json({ error: 'Invalid or expired token' });
+    return res.status(500).json({ error: 'Server authentication error' });
   }
 };
 

@@ -26,9 +26,32 @@ const createChallenge = async (req, res) => {
     }
 };
 
+// Check if user has already taken quiz today
+const hasUserTakenQuizToday = async (userId) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const lastAttempt = await Challenge.findOne({
+        'attempts.userId': userId,
+        'attempts.date': { $gte: today }
+    });
+
+    return !!lastAttempt;
+};
+
 // Fetch all challenges
 const challenges = async (req, res) => {
     try {
+        const userId = req.user.id;
+        const hasTakenToday = await hasUserTakenQuizToday(userId);
+
+        if (hasTakenToday) {
+            return res.status(403).json({
+                message: 'You have already taken today\'s quiz. Please come back tomorrow!',
+                nextQuizTime: new Date(new Date().setHours(24, 0, 0, 0))
+            });
+        }
+
         const challenges = await Challenge.find();
         res.json(challenges);
     } catch (error) {
@@ -45,10 +68,18 @@ const submit = async (req, res) => {
             return res.status(400).json({ message: 'Missing or invalid answers' });
         }
 
-        // Get user from auth middleware
         const userId = req.user.id;
         if (!userId) {
             return res.status(401).json({ message: 'User not authenticated' });
+        }
+
+        // Check if user has already taken quiz today
+        const hasTakenToday = await hasUserTakenQuizToday(userId);
+        if (hasTakenToday) {
+            return res.status(403).json({
+                message: 'You have already taken today\'s quiz. Please come back tomorrow!',
+                nextQuizTime: new Date(new Date().setHours(24, 0, 0, 0))
+            });
         }
 
         const user = await User.findById(userId);
@@ -69,6 +100,16 @@ const submit = async (req, res) => {
                 });
                 continue;
             }
+
+            // Record the attempt
+            challenge.attempts = challenge.attempts || [];
+            challenge.attempts.push({
+                userId,
+                date: new Date(),
+                answer,
+                correct: answer === challenge.correctAnswer
+            });
+            await challenge.save();
 
             const isCorrect = answer === challenge.correctAnswer;
             if (isCorrect) {
@@ -92,7 +133,8 @@ const submit = async (req, res) => {
             results,
             totalCoins,
             newBalance: user.coins,
-            message: `You earned ${totalCoins} coins!`
+            message: `You earned ${totalCoins} coins!`,
+            nextQuizTime: new Date(new Date().setHours(24, 0, 0, 0))
         });
         
     } catch (error) {

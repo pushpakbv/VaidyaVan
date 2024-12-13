@@ -19,7 +19,10 @@ const DailyChallenges = () => {
     const [finalScore, setFinalScore] = useState(0);
     const [correctAnswers, setCorrectAnswers] = useState(0);
     const [submitError, setSubmitError] = useState('');
+    const [nextQuizTime, setNextQuizTime] = useState(null);
+    const [quizLocked, setQuizLocked] = useState(false);
     const navigate = useNavigate();
+    const { user } = useAuthStore();
 
     const article = `
         <h1 class="text-3xl font-bold mb-6">Healing with Herbal Plants: A Natural Approach to Health</h1>
@@ -63,27 +66,48 @@ const DailyChallenges = () => {
         setTimeLeft(600); // Reset timer to 10 minutes
     };
 
-    const fetchChallenges = async () => {
-        try {
-            setLoading(true);
-            const token = localStorage.getItem('token');
-            if (!token) {
-                setError('Please login to access challenges');
-                navigate('/login');
-                return;
+    useEffect(() => {
+        const fetchChallenges = async () => {
+            try {
+                setLoading(true);
+                setError(null);
+                
+                // Check for token
+                const token = localStorage.getItem('token');
+                if (!token) {
+                    console.log('No token found, redirecting to login');
+                    navigate('/login');
+                    return;
+                }
+
+                // Ensure token is properly formatted
+                if (!token.startsWith('Bearer ')) {
+                    localStorage.setItem('token', `Bearer ${token}`);
+                }
+
+                const response = await axiosInstance.get('/challenges');
+                setChallenges(response.data);
+                setUserCoins(user?.coins || 0);
+            } catch (error) {
+                console.error('Error fetching challenges:', error);
+                if (error.response?.status === 403) {
+                    setQuizLocked(true);
+                    setNextQuizTime(new Date(error.response.data.nextQuizTime));
+                    setError(error.response.data.message);
+                } else if (error.response?.status === 401) {
+                    console.log('Auth error, redirecting to login');
+                    localStorage.removeItem('token');
+                    navigate('/login');
+                } else {
+                    setError(error.response?.data?.message || 'Failed to load challenges. Please try again.');
+                }
+            } finally {
+                setLoading(false);
             }
-            const response = await axiosInstance.get('/challenges');
-            setChallenges(response.data);
-        } catch (error) {
-            console.error('Error fetching challenges:', error);
-            if (error.response?.status === 401) {
-                navigate('/login');
-            }
-            setError('Failed to load challenges. Please try again.');
-        } finally {
-            setLoading(false);
-        }
-    };
+        };
+
+        fetchChallenges();
+    }, [navigate, user]);
 
     const areAllQuestionsAnswered = () => {
         return challenges.length > 0 && challenges.every(challenge => answers[challenge._id]);
@@ -113,10 +137,10 @@ const DailyChallenges = () => {
 
         try {
             setSubmitting(true);
-            setSubmitError(''); // Clear any previous errors
+            setSubmitError('');
+            
             const token = localStorage.getItem('token');
             if (!token) {
-                setError('Please login to submit answers');
                 navigate('/login');
                 return;
             }
@@ -127,31 +151,35 @@ const DailyChallenges = () => {
             }));
 
             const response = await axiosInstance.post('/challenges/submit', { answers: answersArray });
-
+            
             setResults(response.data.results);
             setUserCoins(response.data.newBalance);
             setTotalScore(response.data.totalCoins);
             setQuizSubmitted(true);
 
-            // Calculate final score
             const correctCount = response.data.results.filter(r => r.correct).length;
             setCorrectAnswers(correctCount);
             setFinalScore((correctCount / challenges.length) * 100);
 
+            if (response.data.nextQuizTime) {
+                setNextQuizTime(new Date(response.data.nextQuizTime));
+            }
+
         } catch (error) {
             console.error('Error submitting answers:', error);
-            if (error.response?.status === 401) {
+            if (error.response?.status === 403) {
+                setQuizLocked(true);
+                setNextQuizTime(new Date(error.response.data.nextQuizTime));
+                setSubmitError(error.response.data.message);
+            } else if (error.response?.status === 401) {
                 navigate('/login');
+            } else {
+                setSubmitError(error.response?.data?.message || 'Failed to submit answers. Please try again.');
             }
-            setSubmitError(error.response?.data?.message || 'Failed to submit answers. Please try again.');
         } finally {
             setSubmitting(false);
         }
     };
-
-    useEffect(() => {
-        fetchChallenges();
-    }, []);
 
     useEffect(() => {
         let timer;
@@ -171,11 +199,33 @@ const DailyChallenges = () => {
     }, [showQuiz, quizSubmitted]);
 
     if (loading) {
-        return <div className="text-center py-8">Loading challenges...</div>;
+        return (
+            <div className="text-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-500 mx-auto"></div>
+                <p className="mt-4 text-gray-600">Loading quiz...</p>
+            </div>
+        );
     }
 
     if (error) {
-        return <div className="text-red-500 text-center py-8">{error}</div>;
+        return (
+            <div className="bg-white rounded-lg p-8 shadow-sm">
+                <div className="text-center">
+                    <div className="text-xl font-semibold text-red-600 mb-4">{error}</div>
+                    {quizLocked && nextQuizTime && (
+                        <div className="text-gray-600">
+                            <p>Next quiz available at: {new Date(nextQuizTime).toLocaleTimeString()}</p>
+                            <button
+                                onClick={() => navigate('/dashboard')}
+                                className="mt-6 px-6 py-3 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors"
+                            >
+                                Return to Dashboard
+                            </button>
+                        </div>
+                    )}
+                </div>
+            </div>
+        );
     }
 
     const minutes = Math.floor(timeLeft / 60);

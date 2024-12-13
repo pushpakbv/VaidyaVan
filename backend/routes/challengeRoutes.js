@@ -6,7 +6,7 @@ const {challenges,submit,createChallenge} = require('../controllers/challengeCon
 const authenticate = require('../middlewares/authMiddleware');
 
 // Fetch challenges
-router.get('/', challenges);
+router.get('/', authenticate, challenges);
 
 // Submit challenge answer
 router.post('/submit', authenticate, submit);

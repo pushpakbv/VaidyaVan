@@ -22,10 +22,31 @@ const ChallengeSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
+    attempts: [{
+        userId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User',
+            required: true
+        },
+        date: {
+            type: Date,
+            required: true
+        },
+        answer: {
+            type: String,
+            required: true
+        },
+        correct: {
+            type: Boolean,
+            required: true
+        }
+    }],
     createdAt: {
         type: Date,
         default: Date.now,
     },
+}, {
+    timestamps: true
 });
 
 module.exports = mongoose.model('Challenge', ChallengeSchema);
