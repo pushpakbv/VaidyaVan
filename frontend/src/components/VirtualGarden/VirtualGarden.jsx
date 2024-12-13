@@ -518,7 +518,7 @@ const VirtualGarden = () => {
           <hemisphereLight intensity={0.5} groundColor="#2d5a27" />
 
           {/* Plants */}
-          {plantsData.map((plant) => (
+          {plantsData.filter(plant => isPlantPurchased(plant.name)).map((plant) => (
             <Plant
               key={plant.name}
               {...plant}
