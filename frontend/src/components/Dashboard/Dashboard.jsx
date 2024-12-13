@@ -2,6 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import useAuthStore from '../../store/authStore';
+import DailyChallenges from '../DailyChallenges/DailyChallenges';
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -10,6 +11,7 @@ const Dashboard = () => {
   const menuItems = [
     { name: 'Home', path: '/dashboard' },
     { name: 'Virtual Tour', path: '/virtual-tour' },
+    { name: 'Daily Challenges', path: '/daily-challenges' },
     // { name: 'Advanced Search', path: '/advanced-search' },
     // { name: 'Quiz', path: '/quiz' },
     { name: 'Story', path: '/story' },

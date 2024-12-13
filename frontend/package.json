@@ -13,6 +13,7 @@
     "cra-template": "1.2.0",
     "framer-motion": "^11.13.5",
     "gltf-loader": "^1.0.0",
+    "jwt-decode": "^4.0.0",
     "postcss": "^8.4.49",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",

@@ -1,7 +1,13 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
 
-const UserSchema = new mongoose.Schema({
+const UserSchema = new mongoose.Schema({// In d:/HACKAI/HACK_AI/backend/models/User.js
+
+// Add the coins field to the user schema
+coins: {
+    type: Number,
+    default: 0,
+},
   username: { 
     type: String, 
     required: true, 
@@ -28,7 +34,7 @@ const UserSchema = new mongoose.Schema({
 UserSchema.pre('save', async function (next) {
   if (!this.isModified('password')) return next();
   this.password = await bcrypt.hash(this.password, 10);
-  next();
+    next();
 });
 
 // Compare passwords

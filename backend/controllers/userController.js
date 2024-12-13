@@ -4,7 +4,6 @@ const mongoose = require('mongoose');
 const fs = require('fs-extra');
 const path = require('path');
 
-
 exports.register = async (req, res) => {
   const { username, email, password } = req.body;
   try {
@@ -62,7 +61,6 @@ exports.logout =  (req, res) => {
     }
 };
 
-
 exports.validateToken = async (req, res) => {
   try {
     const token = req.cookies.token || req.headers.authorization?.split(' ')[1];
@@ -83,7 +81,6 @@ exports.validateToken = async (req, res) => {
     res.status(401).json({ valid: false });
   }
 };
-
 
 exports.getProfile = async (req, res) => {
   try {
