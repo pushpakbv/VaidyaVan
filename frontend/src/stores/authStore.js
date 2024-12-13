@@ -7,7 +7,20 @@ const useAuthStore = create((set, get) => ({
     console.log('Setting user:', user);
     set({ user });
   },
-  clearUser: () => set({ user: null }),
+  clearUser: () => {
+    // Clear user data
+    set({ user: null });
+    
+    // Clear token
+    localStorage.removeItem('token');
+    
+    // Clear all user-specific inventories
+    Object.keys(localStorage).forEach(key => {
+      if (key.startsWith('inventory_')) {
+        localStorage.removeItem(key);
+      }
+    });
+  },
   login: async (email, password) => {
     try {
       const response = await axiosInstance.post('/auth/login', { email, password });

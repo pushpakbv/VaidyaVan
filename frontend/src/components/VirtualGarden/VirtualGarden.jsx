@@ -142,26 +142,45 @@ const PlantInfo = ({ plant, onClose }) => {
 const VirtualGarden = () => {
   const [selectedPlant, setSelectedPlant] = useState(null);
   const [quizPopup, setQuizPopup] = useState({ show: false, plant: null });
+  const [purchasedPlants, setPurchasedPlants] = useState([]);
   const { user, fetchUserData } = useAuthStore();
   const navigate = useNavigate();
 
-  // Fetch user data when component mounts
+  // Fetch user data and load purchased plants when component mounts
   useEffect(() => {
     const fetchData = async () => {
       console.log('Fetching user data...');
       const userData = await fetchUserData();
       console.log('User data received:', userData);
+      
+      if (userData && userData._id) {
+        // Load purchased plants from localStorage with user-specific key
+        const inventory = JSON.parse(localStorage.getItem(`inventory_${userData._id}`)) || [];
+        setPurchasedPlants(inventory);
+      } else {
+        // If no user is logged in, clear purchased plants
+        setPurchasedPlants([]);
+      }
     };
     fetchData();
   }, [fetchUserData]);
 
+  // Function to check if a plant is purchased
+  const isPlantPurchased = (plantName) => {
+    return purchasedPlants.includes(plantName);
+  };
+
   // Function to handle buy button click
   const handleBuyClick = (plant, event) => {
     event.stopPropagation();
+    
+    if (isPlantPurchased(plant.name)) {
+      alert('You already own this plant!');
+      return;
+    }
+    
     const userCoins = user?.coins || 0;
-    console.log('Current user:', user);
-    console.log('User coins:', userCoins);
-    const plantCost = 100; // Example cost, adjust as needed
+    const plantCost = 100;
     
     if (userCoins >= plantCost) {
       setQuizPopup({ show: true, plant });
@@ -183,10 +202,10 @@ const VirtualGarden = () => {
         const updatedUser = { ...user, coins: response.data.newBalance };
         useAuthStore.getState().setUser(updatedUser);
         
-        // Add to inventory
-        const inventory = JSON.parse(localStorage.getItem('inventory')) || [];
-        inventory.push(quizPopup.plant.name);
-        localStorage.setItem('inventory', JSON.stringify(inventory));
+        // Add to purchased plants state and localStorage with user-specific key
+        const updatedInventory = [...purchasedPlants, quizPopup.plant.name];
+        setPurchasedPlants(updatedInventory);
+        localStorage.setItem(`inventory_${user._id}`, JSON.stringify(updatedInventory));
         
         setQuizPopup({ show: false, plant: null });
         alert(`Congratulations! You've successfully purchased ${quizPopup.plant.name}!`);
@@ -433,6 +452,57 @@ const VirtualGarden = () => {
         <span className="font-medium">Exit Garden</span>
       </button>
 
+      {/* Controls Help */}
+      <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm rounded-xl px-6 py-4 shadow-lg z-50">
+        <h3 className="text-xl font-bold text-green-800 mb-3">Virtual Herbal Garden</h3>
+        <div className="space-y-2">
+          <p className="text-green-700 font-semibold">Navigation Controls:</p>
+          <ul className="text-sm text-gray-700 space-y-1">
+            <li>Left Click + Drag: Rotate view</li>
+            <li>Right Click + Drag: Pan</li>
+            <li>Scroll: Zoom in/out</li>
+            <li>Click on plants for information</li>
+          </ul>
+        </div>
+      </div>
+
+      {/* Plant List */}
+      <div className="absolute top-56 left-4 bg-white/90 backdrop-blur-sm rounded-xl px-6 py-4 shadow-lg max-w-xs z-50">
+        <h3 className="text-lg font-bold text-green-800 mb-3 border-b border-green-200 pb-2">Plants in Garden</h3>
+        <ul className="space-y-2 max-h-96 overflow-y-auto custom-scrollbar">
+          {plantsData.map((plant) => (
+            <li 
+              key={plant.name}
+              className="group cursor-pointer hover:bg-green-50 rounded-lg p-2 transition-all duration-200"
+              onClick={() => setSelectedPlant(plant)}
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <span className="w-2 h-2 rounded-full bg-green-500 group-hover:bg-green-600"></span>
+                  <span className="text-green-700 font-medium group-hover:text-green-800">
+                    {plant.name}
+                  </span>
+                </div>
+                <div className="flex items-center space-x-3">
+                  {isPlantPurchased(plant.name) ? (
+                    <span className="px-2 py-1 text-sm bg-gray-200 text-gray-700 rounded-md">
+                      Purchased
+                    </span>
+                  ) : (
+                    <button
+                      onClick={(e) => handleBuyClick(plant, e)}
+                      className="px-2 py-1 text-sm bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors duration-200"
+                    >
+                      Buy
+                    </button>
+                  )}
+                </div>
+              </div>
+            </li>
+          ))}
+        </ul>
+      </div>
+
       <Canvas shadows camera={{ position: [0, 5, 15], fov: 60 }}>
         <Suspense fallback={null}>
           <color attach="background" args={['#f0f8ff']} />
@@ -474,72 +544,6 @@ const VirtualGarden = () => {
           />
         </Suspense>
       </Canvas>
-
-      {/* Controls Help */}
-      <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm rounded-xl px-6 py-4 shadow-lg">
-        <h3 className="text-xl font-bold text-green-800 mb-3">Virtual Herbal Garden</h3>
-        <div className="space-y-2">
-          <p className="text-green-700 font-semibold">Navigation Controls:</p>
-          <ul className="text-sm text-gray-700 space-y-1">
-            <li> Left Click + Drag: Rotate view</li>
-            <li> Right Click + Drag: Pan</li>
-            <li> Scroll: Zoom in/out</li>
-            <li> Click on plants for information</li>
-          </ul>
-        </div>
-      </div>
-
-      {/* Plant List */}
-      <div className="absolute top-56 left-4 bg-white/90 backdrop-blur-sm rounded-xl px-6 py-4 shadow-lg max-w-xs">
-        <h3 className="text-lg font-bold text-green-800 mb-3 border-b border-green-200 pb-2">Plants in Garden</h3>
-        <ul className="space-y-2 max-h-96 overflow-y-auto custom-scrollbar">
-          {plantsData.map((plant, index) => (
-            <li 
-              key={plant.name}
-              className="group cursor-pointer hover:bg-green-50 rounded-lg p-2 transition-all duration-200"
-              onClick={() => setSelectedPlant(plant)}
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-2">
-                  <span className="w-2 h-2 rounded-full bg-green-500 group-hover:bg-green-600"></span>
-                  <span className="text-green-700 font-medium group-hover:text-green-800">
-                    {plant.name}
-                  </span>
-                </div>
-                <div className="flex items-center space-x-3">
-                  <span className="flex items-center space-x-1">
-                    <span className="text-amber-600 font-semibold">
-                      {(index + 1) * 10}
-                    </span>
-                    <svg className="w-4 h-4 text-amber-500" fill="currentColor" viewBox="0 0 20 20">
-                      <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
-                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM10 2a6 6 0 100 12 6 6 0 000-12z" clipRule="evenodd" />
-                    </svg>
-                  </span>
-                  <button
-                    onClick={(e) => handleBuyClick(plant, e)}
-                    className="px-2 py-1 text-sm bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors duration-200"
-                  >
-                    Buy
-                  </button>
-                </div>
-              </div>
-            </li>
-          ))}
-        </ul>
-        <div className="mt-3 pt-2 border-t border-green-200">
-          <p className="text-sm text-green-600 font-medium flex items-center justify-between">
-            <span>Total Plants: {plantsData.length}</span>
-            <span className="flex items-center space-x-1">
-              <span className="text-amber-600 font-semibold">{plantsData.length * (plantsData.length + 1) * 5}</span>
-              <svg className="w-4 h-4 text-amber-500" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM10 2a6 6 0 100 12 6 6 0 000-12z" clipRule="evenodd" />
-              </svg>
-            </span>
-          </p>
-        </div>
-      </div>
 
       {/* Quiz Popup */}
       {quizPopup.show && (
