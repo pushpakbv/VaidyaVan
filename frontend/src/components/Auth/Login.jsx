@@ -179,17 +179,6 @@ const Login = () => {
         </form>
 
         <div className="mt-6 text-center text-sm text-gray-600">
-          Forgot Password?{' '}
-          <button
-            type="button"
-            onClick={() => navigate('/reset-password')}
-            className="text-green-600 hover:text-green-700 font-medium hover:underline transform hover:scale-105 transition-all inline-block"
-          >
-            Reset
-          </button>
-        </div>
-
-        <div className="mt-4 text-center text-sm text-gray-600">
           Don't have an account?{' '}
           <Link
             to="/register"
