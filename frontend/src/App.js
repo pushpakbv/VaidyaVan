@@ -6,6 +6,7 @@ import Dashboard from './components/Dashboard/Dashboard';
 import useAuthStore from './store/authStore';
 import VirtualGarden from './components/VirtualGarden/VirtualGarden';
 import DailyChallenges from './components/DailyChallenges/DailyChallenges';
+import Stories from './components/Stories/Stories';
 
 function App() {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
@@ -20,6 +21,7 @@ function App() {
           <Route path="/dashboard" element={isAuthenticated ? <Dashboard /> : <Navigate to="/login" />} />
           <Route path="/daily-challenges" element={isAuthenticated ? <DailyChallenges /> : <Navigate to="/login" />} />
           <Route path="/virtual-tour" element={isAuthenticated ? <VirtualGarden /> : <Navigate to="/login" />} />
+          <Route path="/stories" element={isAuthenticated ? <Stories /> : <Navigate to="/login" />} />
         </Routes>
       </div>
     </Router>
