@@ -84,29 +84,25 @@ exports.validateToken = async (req, res) => {
 
 exports.getProfile = async (req, res) => {
   try {
-    // Check if we have either a valid userId parameter or a valid user in the request
-    const userId = req.params.userId || req.user?.id;
-    
-    if (!userId) {
-      return res.status(400).json({ error: 'User ID is required' });
+    // If it's the /me endpoint or we have a user in the request
+    if (req.path === '/profile/me' || !req.params.userId) {
+      if (!req.user) {
+        return res.status(401).json({ error: 'Not authenticated' });
+      }
+      const user = await User.findById(req.user.id).select('-password');
+      return res.json(user);
     }
 
-    const user = await User.findById(userId).select('-password');
-    
+    // If we have a userId parameter
+    const user = await User.findById(req.params.userId).select('-password');
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
 
     res.json(user);
   } catch (error) {
-    console.error('Get profile error:', error);
-    
-    // Handle specific mongoose CastError for invalid ObjectId
-    if (error.name === 'CastError' && error.kind === 'ObjectId') {
-      return res.status(400).json({ error: 'Invalid user ID format' });
-    }
-    
-    res.status(500).json({ error: 'Error fetching profile' });
+    console.error('Error in getProfile:', error);
+    res.status(500).json({ error: 'Server error' });
   }
 };
 
