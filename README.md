@@ -55,22 +55,45 @@ VaidyaVan is an immersive web-based platform that brings the rich heritage of tr
 
 ## 📂 Installation & Usage  
 
+### **Frontend Setup**  
+
 1. **Clone the repository**:  
    ```bash
    git clone https://github.com/pushpakbv/VaidyaVan.git
    cd VaidyaVan
 2. **Install dependencies**:
    ```bash
+   cd frontend
    npm install
-3. **Start the development server**:
+3. **Start the frontend development server**:
    ```bash
    npm start
-4. **Backend setup**:
-   ```bash
-   npm run start
-5. **Explore VaidyaVan**:
-   Access the platform at http://localhost:3000.
+4. **Access the frontend**:
+   Visit http://localhost:3000 in your browser.
 
+### **Backend Setup**
+
+1. **Navigate to the backend directory**:
+   ```bash
+   cd backend
+2. **Install dependencies**:
+   ```bash
+   npm install
+3. **Configure environment variables**:
+   Create a .env file in the backend directory and add the following configuration:
+   ```plaintext
+   PORT=5000
+   MONGO_URI=mongodb://localhost:27017/VaidyaVan
+   JWT_SECRET=
+   JWT_REFRESH_SECRET=
+   FRONTEND_URL=http://localhost:3000
+   GEMINI_API_KEY=
+4. **Start the backend server**:
+   ```bash
+   npm start
+5. **Access the backend**:
+   The backend will run on http://localhost:5000.
+   
 ---
 
 ## 🛠️ Tech Stack
