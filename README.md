@@ -20,7 +20,7 @@ VaidyaVan is an immersive web-based platform that brings the rich heritage of tr
 ### **Frontend**  
 - **React.js 18**: Component-based architecture for maintainable and scalable UI.  
 - **TailwindCSS**: Responsive and modern design for seamless user experience.  
-- **React Three Fiber & Three.js**: For photorealistic 3D plant rendering and interaction.  
+- **Three.js**: For photorealistic 3D plant rendering and interaction.  
 - **State Management**: Zustand for efficient and lightweight state handling.  
 - **Custom 3D Management**: Tailored camera controls and scene management for intuitive navigation.  
 
