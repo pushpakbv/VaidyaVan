@@ -57,7 +57,7 @@ VaidyaVan is an immersive web-based platform that brings the rich heritage of tr
 
 1. **Clone the repository**:  
    ```bash
-   git clone https://github.com/your-username/VaidyaVan.git
+   git clone https://github.com/pushpakbv/VaidyaVan.git
    cd VaidyaVan
 2. **Install dependencies**:
    ```bash
@@ -80,13 +80,13 @@ VaidyaVan is an immersive web-based platform that brings the rich heritage of tr
 - **3D Visualization**: Three.js
 
 ## 👩‍💻 Contributing
--Contributions are welcome! Feel free to open an issue or submit a pull request.
+Contributions are welcome! Feel free to open an issue or submit a pull request.
 
 ---
 
 
 ## 📄 License
--This project is licensed under the MIT License. See the LICENSE file for details.
+This project is licensed under the MIT License. See the LICENSE file for details.
 
 ---
 
