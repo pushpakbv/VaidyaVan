@@ -74,7 +74,7 @@ VaidyaVan is an immersive web-based platform that brings the rich heritage of tr
 ---
 
 ## 🛠️ Tech Stack
-- **Frontend**: React.js, TailwindCSS, React Three Fiber, Framer Motion
+- **Frontend**: React.js, TailwindCSS
 - **Backend**: Node.js, Express.js
 - **Database**: MongoDB
 - **3D Visualization**: Three.js
