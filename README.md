@@ -80,7 +80,7 @@ VaidyaVan is an immersive web-based platform that brings the rich heritage of tr
 
    ![v13](https://github.com/user-attachments/assets/ec9f1aa1-d5f6-4763-9cd9-15a93c9f0146)
 
-5. ***Stories**
+5. **Stories**
 
    ![v15](https://github.com/user-attachments/assets/88572ea5-9d1b-4a0b-9baa-9bda8bbbef37)
 
