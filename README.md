@@ -55,8 +55,34 @@ VaidyaVan is an immersive web-based platform that brings the rich heritage of tr
 
 ##  Images
 
-1. **Login**
-![Screenshot 2025-03-13 112027](https://github.com/user-attachments/assets/994b1eb4-d0e2-4182-a830-e8d28a870787)
+1. **Login Page**
+   
+   ![Screenshot 2025-03-13 112027](https://github.com/user-attachments/assets/994b1eb4-d0e2-4182-a830-e8d28a870787)
+
+2. **Home Page**
+
+   ![image](https://github.com/user-attachments/assets/ff04edc7-6bc4-45c0-a43a-8e9f7ee4b418)
+
+   ![v3](https://github.com/user-attachments/assets/79ba85b1-f8aa-4513-9f08-2a9763f64f97)
+
+
+3. **Daily Quiz**
+
+   ![v5](https://github.com/user-attachments/assets/1b6841a9-780b-4601-9f6d-e108940d535d)
+
+   ![Screenshot 2025-03-13 114609](https://github.com/user-attachments/assets/bc9f7bdb-c780-474d-8fc0-a46f2309b8ca)
+
+4. **Virtual Garden**
+
+   ![Screenshot 2025-03-13 114740](https://github.com/user-attachments/assets/df7fa013-04ca-40b4-9f53-79e2345fec6f)
+
+   ![Screenshot 2025-03-13 115019](https://github.com/user-attachments/assets/ef3f2ff6-523f-42d3-9772-c4d29a073c88)
+
+   ![v13](https://github.com/user-attachments/assets/ec9f1aa1-d5f6-4763-9cd9-15a93c9f0146)
+
+5. ***Stories**
+
+   ![v15](https://github.com/user-attachments/assets/88572ea5-9d1b-4a0b-9baa-9bda8bbbef37)
 
 
 ---
